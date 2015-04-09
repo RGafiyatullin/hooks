@@ -11,9 +11,9 @@
 % WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 % See the License for the specific language governing permissions and
 % limitations under the License.
-% 
+%
 % See the NOTICE file distributed with this work for additional information regarding copyright ownership.
-% 
+%
 
 -module (hooks_hook_mgr).
 -behaviour (gen_server).
@@ -88,7 +88,7 @@ do_add_handler( {mfa, M, F, A}, Priority, State = #s{ hook_id = HookID, handlers
 	hooks_compiler:notify_hook_handlers_updated( HookID ),
 	{reply, ok, State #s{ handlers = NewHandlers }}.
 
--spec add_handler_loop( #handler{}, [#handler{}], queue:queue() ) -> [#handler{}].
+-spec add_handler_loop( #handler{}, [#handler{}], queue:queue( #handler{} ) ) -> [#handler{}].
 add_handler_loop( H = #handler{}, [], HeadQ ) -> queue:to_list( queue:in( H, HeadQ ) );
 add_handler_loop( H = #handler{ priority = P }, [ H1 = #handler{ priority = P1 } | Hs ], HeadQ ) when P >= P1 -> add_handler_loop( H, Hs, queue:in( H1, HeadQ ) );
 add_handler_loop( H = #handler{ priority = P }, Hs = [ #handler{ priority = P1 } | _ ], HeadQ ) when P < P1 -> queue:to_list( queue:in( H, HeadQ ) ) ++ Hs.
