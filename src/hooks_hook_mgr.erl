@@ -32,6 +32,7 @@
 -export([
 	get/1,
 	add_handler/3,
+	remove_handler/3,
 	dump/1
 ]).
 
@@ -47,6 +48,9 @@ get( HookID ) -> {ok, HookMgr} = hooks_hook_mgr_sup:get_hook_mgr( HookID ), Hook
 
 -spec add_handler( pid(), {mfa, atom(), atom(), [term()]}, integer() ) -> ok.
 add_handler( HookMgr, {mfa, M, F, A}, Priority ) -> gen_server:call( HookMgr, {add_handler, {mfa, M, F, A}, Priority} ).
+
+-spec remove_handler( pid(), {mfa, atom(), atom(), [term()]}, integer() ) -> ok.
+remove_handler( HookMgr, {mfa, M, F, A}, Priority ) -> gen_server:call( HookMgr, {remove_handler, {mfa, M, F, A}, Priority} ).
 
 -spec dump( pid() ) -> term().
 dump( HookMgr ) -> gen_server:call( HookMgr, dump ).
@@ -67,6 +71,7 @@ init({ HookID }) -> {ok, #s{ hook_id = HookID, handlers = [ #handler{ func = F, 
 
 handle_call( dump, _From, State ) -> {reply, State, State};
 handle_call( {add_handler, {mfa, M, F, A}, Priority}, _From, State ) -> do_add_handler( {mfa, M, F, A}, Priority, State );
+handle_call( {remove_handler, {mfa, M, F, A}, Priority}, _From, State ) -> do_remove_handler( {mfa, M, F, A}, Priority, State );
 handle_call(Request, _From, State = #s{}) -> {stop, {bad_arg, Request}, State}.
 
 handle_cast(Request, State = #s{}) -> {stop, {bad_arg, Request}, State}.
@@ -84,6 +89,13 @@ code_change(_OldVsn, State, _Extra) -> {ok, State}.
 do_add_handler( {mfa, M, F, A}, Priority, State = #s{ hook_id = HookID, handlers = Handlers } ) ->
 	Handler = #handler{ func = {mfa, M, F, A}, priority = Priority },
 	NewHandlers = add_handler_loop( Handler, Handlers, queue:new() ),
+	hooks_ets:handlers_set( HookID, [ {Func, Prio} || #handler{ func = Func, priority = Prio } <- NewHandlers] ),
+	hooks_compiler:notify_hook_handlers_updated( HookID ),
+	{reply, ok, State #s{ handlers = NewHandlers }}.
+-spec do_remove_handler( {mfa, atom(), atom(), [term()]}, integer(), #s{} ) -> {reply, ok, #s{}}.
+do_remove_handler( {mfa, M, F, A}, Priority, State = #s{ hook_id = HookID, handlers = Handlers } ) ->
+	Handler = #handler{ func = {mfa, M, F, A}, priority = Priority },
+	NewHandlers = lists:filter( fun( H ) -> H /= Handler end, Handlers ),
 	hooks_ets:handlers_set( HookID, [ {Func, Prio} || #handler{ func = Func, priority = Prio } <- NewHandlers] ),
 	hooks_compiler:notify_hook_handlers_updated( HookID ),
 	{reply, ok, State #s{ handlers = NewHandlers }}.

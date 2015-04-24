@@ -11,9 +11,9 @@
 % WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 % See the License for the specific language governing permissions and
 % limitations under the License.
-% 
+%
 % See the NOTICE file distributed with this work for additional information regarding copyright ownership.
-% 
+%
 
 -module(hooks).
 -export([
@@ -31,7 +31,7 @@
 add_handler( HookID, Handler, Priority ) -> hooks_hook_mgr:add_handler(hooks_hook_mgr:get( HookID ), Handler, Priority ).
 
 -spec remove_handler( HookID :: term(), Handler :: hook_handler(), Priority :: integer() ) -> ok.
-remove_handler( _HookID, _Handler, _Priority ) -> error({not_implemented, ?MODULE, remove_handler}).
+remove_handler( HookID, Handler, Priority ) -> hooks_hook_mgr:remove_handler( hooks_hook_mgr:get( HookID ), Handler, Priority ).
 
 -spec run( HookID :: term(), AccIn :: term(), Args :: [term()] ) -> AccOut :: term().
 run( HookID, AccIn, Args ) -> hooks_hook_runner_beam:run( HookID, AccIn, Args ).

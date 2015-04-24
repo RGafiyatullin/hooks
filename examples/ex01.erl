@@ -9,7 +9,9 @@
 init() ->
 	application:start( hooks ),
 	ok = hooks:add_handler( {event, one}, {mfa, ?MODULE, handle_one_1, []}, 50 ),
-	ok = hooks:add_handler( {event, one}, {mfa, ?MODULE, handle_one_2, []}, 50 ).
+	ok = hooks:add_handler( {event, one}, {mfa, ?MODULE, handle_one_2, []}, 50 ),
+	ok = hooks:add_handler( {event, one}, {mfa, ?MODULE, handle_one_3, []}, 50 ),
+	ok = hooks:remove_handler( {event, one}, {mfa, ?MODULE, handle_one_3, []}, 50 ).
 
 emit_event() ->
 	hooks:run( {event, one}, [], [ arg1, arg2, arg3 ] ).
